@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="glass-card" style="max-width: 600px; margin: 2rem auto;">
+    <h2 style="margin-bottom: 2rem; color: var(--primary);">Mark Attendance</h2>
+    
+    <div id="location-status" class="alert alert-info" style="background: #DBEAFE; color: #2563EB; border: 1px solid #93C5FD;">
+        Fetching your current location... Please allow location access.
+    </div>
+
+    <form method="post" action="{% url 'submit_attendance' %}" id="attendance-form" style="display: none;">
+        {% csrf_token %}
+        <input type="hidden" name="latitude" id="latitude">
+        <input type="hidden" name="longitude" id="longitude">
+        
+        <div class="form-group">
+            <label class="form-label" for="factory">Select Factory</label>
+            <select name="factory" id="factory" class="form-control" required>
+                <option value="">-- Select Factory --</option>
+                {% for factory in factories %}
+                    <option value="{{ factory.id }}">{{ factory.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;" id="submit-btn">Submit Attendance</button>
+    </form>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const statusDiv = document.getElementById('location-status');
+    const form = document.getElementById('attendance-form');
+    const latInput = document.getElementById('latitude');
+    const lonInput = document.getElementById('longitude');
+
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            function(position) {
+                latInput.value = position.coords.latitude;
+                lonInput.value = position.coords.longitude;
+                statusDiv.className = 'alert alert-success';
+                statusDiv.innerHTML = 'Location found successfully! You can now mark your attendance.';
+                form.style.display = 'block';
+            },
+            function(error) {
+                statusDiv.className = 'alert alert-error';
+                switch(error.code) {
+                    case error.PERMISSION_DENIED:
+                        statusDiv.innerHTML = "User denied the request for Geolocation.";
+                        break;
+                    case error.POSITION_UNAVAILABLE:
+                        statusDiv.innerHTML = "Location information is unavailable.";
+                        break;
+                    case error.TIMEOUT:
+                        statusDiv.innerHTML = "The request to get user location timed out.";
+                        break;
+                    case error.UNKNOWN_ERROR:
+                        statusDiv.innerHTML = "An unknown error occurred.";
+                        break;
+                }
+            },
+            {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 0
+            }
+        );
+    } else {
+        statusDiv.className = 'alert alert-error';
+        statusDiv.innerHTML = "Geolocation is not supported by this browser.";
+    }
+});
+</script>
+{% endblock %}

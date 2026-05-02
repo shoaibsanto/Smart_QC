@@ -1,0 +1,121 @@
+{% extends 'base.html' %}
+{% block content %}
+<div style="margin-bottom: 2rem;">
+    <h2>Dashboard - {{ role }} Portal</h2>
+    <p style="color: var(--text-light);">Welcome back, {{ user.first_name|default:user.username }}</p>
+</div>
+
+{% if role == 'QC' %}
+    <div style="display: flex; gap: 2rem; flex-wrap: wrap;">
+        <div class="glass-card" style="flex: 1; min-width: 300px;">
+            <h3>Quick Actions</h3>
+            <div style="margin-top: 1rem; display: flex; gap: 1rem;">
+                <a href="{% url 'mark_attendance' %}" class="btn btn-primary">Mark Attendance</a>
+                <a href="{% url 'apply_leave' %}" class="btn btn-primary" style="background: var(--text-dark);">Apply Leave</a>
+            </div>
+        </div>
+    </div>
+
+    <div style="display: flex; gap: 2rem; flex-wrap: wrap;">
+        <div class="glass-card" style="flex: 1; min-width: 300px;">
+            <h3>Recent Attendance</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Factory</th>
+                        <th>Timestamp</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for attendance in attendances %}
+                    <tr>
+                        <td>{{ attendance.factory.name }}</td>
+                        <td>{{ attendance.timestamp|date:"M d, Y H:i" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="2">No recent attendance records.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="glass-card" style="flex: 1; min-width: 300px;">
+            <h3>Recent Leave Requests</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Type</th>
+                        <th>Dates</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for leave in leaves %}
+                    <tr>
+                        <td>{{ leave.leave_type }}</td>
+                        <td>{{ leave.start_date|date:"M d" }} - {{ leave.end_date|date:"M d" }}</td>
+                        <td>
+                            {% if leave.status == 'Approved' %}<span class="badge badge-success">Approved</span>
+                            {% elif leave.status == 'Rejected' %}<span class="badge badge-danger">Rejected</span>
+                            {% elif leave.status == 'Pending TL' %}<span class="badge badge-warning">Pending TL</span>
+                            {% elif leave.status == 'Pending HR' %}<span class="badge badge-info">Pending HR</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="3">No leave requests found.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endif %}
+
+{% if role == 'TL' or role == 'HR' %}
+    <div class="glass-card">
+        <h3>Pending Leave Approvals</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>QC Employee</th>
+                    <th>Type</th>
+                    <th>Dates</th>
+                    <th>Reason</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for leave in pending_leaves %}
+                <tr>
+                    <td>{{ leave.user.username }}</td>
+                    <td>{{ leave.leave_type }}</td>
+                    <td>{{ leave.start_date|date:"M d" }} - {{ leave.end_date|date:"M d" }}</td>
+                    <td>{{ leave.reason|truncatechars:30 }}</td>
+                    <td>
+                        <form method="post" action="{% url 'approve_leave' leave.id %}" style="display:inline;">
+                            {% csrf_token %}
+                            <button type="submit" name="action" value="approve" class="btn btn-success" style="padding: 0.3rem 0.6rem; font-size: 0.8rem;">Approve</button>
+                            <button type="submit" name="action" value="reject" class="btn btn-danger" style="padding: 0.3rem 0.6rem; font-size: 0.8rem;">Reject</button>
+                        </form>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="5">No pending leaves to approve.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endif %}
+
+{% if role == 'Admin' %}
+    <div class="glass-card">
+        <h3>Admin Overview</h3>
+        <p>Total Factories Managed: <strong>{{ factories_count }}</strong></p>
+        <div style="margin-top: 1rem;">
+            <a href="/admin/factories/factory/" class="btn btn-primary">Manage Factories</a>
+            <a href="/admin/users/customuser/" class="btn btn-primary" style="background: var(--text-dark);">Manage Users</a>
+        </div>
+    </div>
+{% endif %}
+
+{% endblock %}

@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="glass-card" style="max-width: 400px; margin: 4rem auto;">
+    <h2 style="text-align: center; margin-bottom: 2rem; color: var(--primary);">Welcome Back</h2>
+    
+    {% if form.errors %}
+        <div class="alert alert-error">
+            Invalid username or password. Please try again.
+        </div>
+    {% endif %}
+
+    <form method="post">
+        {% csrf_token %}
+        <div class="form-group">
+            <label class="form-label" for="id_username">Username</label>
+            {{ form.username }}
+            <script>document.getElementById('id_username').classList.add('form-control');</script>
+        </div>
+        <div class="form-group">
+            <label class="form-label" for="id_password">Password</label>
+            {{ form.password }}
+            <script>document.getElementById('id_password').classList.add('form-control');</script>
+        </div>
+        <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">Sign In</button>
+    </form>
+</div>
+{% endblock %}
